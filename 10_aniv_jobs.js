@@ -53,6 +53,16 @@ function checkBirthdaysToday() {
       }
     });
 
+    // aviso diário para a comunicação
+    try {
+      aniv_notifyCommunicationMembers_(rows, start, start, false);
+    } catch (e) {
+      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário para comunicação (membros)', {
+        err: String(e),
+        stack: e && e.stack
+      });
+    }
+
     GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: FIM OK', { count: rows.length });
   } finally {
     lock.releaseLock();
@@ -88,6 +98,16 @@ function checkProfsBirthdaysToday() {
         });
       }
     });
+
+    // aviso diário para a comunicação
+    try {
+      aniv_notifyCommunicationProfs_(rows, start, start, false);
+    } catch (e) {
+      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário para comunicação (profs)', {
+        err: String(e),
+        stack: e && e.stack
+      });
+    }
 
     GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: FIM OK', { count: rows.length });
   } finally {
