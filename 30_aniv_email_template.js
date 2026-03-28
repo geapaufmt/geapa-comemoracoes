@@ -129,6 +129,48 @@ function aniv_notifyCommunicationProfs_(rows, startDay, endDay, weekly) {
 
   return aniv_sendToCommunication_(subject, html);
 }
+function aniv_notifyCommunicationCombined_(memberRows, profRows, startDay, endDay, weekly) {
+  const subject = weekly ? ANIV_CFG.EMAIL.SUBJECT_WEEK : ANIV_CFG.EMAIL.SUBJECT_TODAY;
+
+  const subtitle = weekly && endDay
+    ? `De ${aniv_formatDate_(startDay)} até ${aniv_formatDate_(endDay)}`
+    : `${aniv_formatDate_(startDay)}`;
+
+  const items = [];
+
+  if (memberRows.length) {
+    items.push({ line1: 'Membros', line2: '' });
+    memberRows.forEach(m => {
+      items.push({
+        line1: `🎉 ${aniv_safe_(m.name)}`,
+        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(m.birth, startDay.getFullYear())))}${m.role ? ` — ${aniv_safe_(m.role)}` : ''}`
+      });
+    });
+  }
+
+  if (profRows.length) {
+    items.push({ line1: 'Professores', line2: '' });
+    profRows.forEach(p => {
+      items.push({
+        line1: `👩‍🏫 ${aniv_safe_(p.name)}`,
+        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(p.birth, startDay.getFullYear())))}`
+      });
+    });
+  }
+
+  if (!items.length) {
+    items.push({ line1: 'Sem aniversariantes no período.', line2: '' });
+  }
+
+  const html = aniv_buildHtmlEmail_({
+    title: subject,
+    subtitle,
+    items,
+    footer: ANIV_CFG.BRAND.QUOTE
+  });
+
+  return aniv_sendToCommunication_(subject, html);
+}
 
 /**
  * ------------------------------------------------------------

@@ -1,34 +1,23 @@
 /**************************************
  * 11_aniv_readers.gs
  * LEITURA + FILTRO DE DADOS
- *
- * Regras principais:
- * - Abre Sheets via Registry KEY (sem IDs fixos).
- * - Usa cabeçalhos (nomes) para achar colunas.
- * - Normaliza aniversário "dia/mês" para o ano do período consultado.
- * - Janela é [startInclusive, endExclusive).
  **************************************/
 
-/**
- * ------------------------------------------------------------
- * Lê aniversariantes (MEMBROS) dentro de uma janela.
- * ------------------------------------------------------------
- */
 function aniv_getMemberBirthdaysForWindow_(startInclusive, endExclusive) {
   const sh = aniv_getSheetByKey_(ANIV_CFG.MEMBERS.KEY);
   const data = aniv_readSheet_(sh);
 
-  const iName  = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_NAME);
+  const iName = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_NAME);
   const iBirth = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_BIRTHDATE);
   const iEmail = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_EMAIL);
-  const iRole  = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
+  const iRole = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
   const iInsta = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INSTA, true);
 
   if (iName < 0 || iBirth < 0 || iEmail < 0) return [];
 
   const startYear = new Date(startInclusive).getFullYear();
-
   const out = [];
+
   for (const row of data.rows) {
     const name = String(row[iName] || '').trim();
     const birthRaw = row[iBirth];
@@ -54,24 +43,19 @@ function aniv_getMemberBirthdaysForWindow_(startInclusive, endExclusive) {
   return out;
 }
 
-/**
- * ------------------------------------------------------------
- * Lê aniversariantes (PROFS) dentro de uma janela.
- * ------------------------------------------------------------
- */
 function aniv_getProfBirthdaysForWindow_(startInclusive, endExclusive) {
   const sh = aniv_getSheetByKey_(ANIV_CFG.PROFS.KEY);
   const data = aniv_readSheet_(sh);
 
-  const iName  = aniv_findHeaderIndex_(data.headers, ANIV_CFG.PROFS.COL_NAME);
+  const iName = aniv_findHeaderIndex_(data.headers, ANIV_CFG.PROFS.COL_NAME);
   const iEmail = aniv_findHeaderIndex_(data.headers, ANIV_CFG.PROFS.COL_EMAIL);
   const iBirth = aniv_findHeaderIndex_(data.headers, ANIV_CFG.PROFS.COL_BIRTHDATE);
 
   if (iName < 0 || iEmail < 0 || iBirth < 0) return [];
 
   const startYear = new Date(startInclusive).getFullYear();
-
   const out = [];
+
   for (const row of data.rows) {
     const name = String(row[iName] || '').trim();
     const email = String(row[iEmail] || '').trim();
@@ -91,11 +75,6 @@ function aniv_getProfBirthdaysForWindow_(startInclusive, endExclusive) {
   return out;
 }
 
-/**
- * ------------------------------------------------------------
- * Lê DATAS COMEMORATIVAS dentro de uma janela.
- * ------------------------------------------------------------
- */
 function aniv_getCommemorativesForWindow_(startInclusive, endExclusive) {
   const sh = aniv_getSheetByKey_(ANIV_CFG.DATES.KEY);
   const data = aniv_readSheet_(sh);
@@ -108,8 +87,8 @@ function aniv_getCommemorativesForWindow_(startInclusive, endExclusive) {
   if (iTitle < 0 || iDate < 0) return [];
 
   const startYear = new Date(startInclusive).getFullYear();
-
   const out = [];
+
   for (const row of data.rows) {
     const title = String(row[iTitle] || '').trim();
     const dateRaw = row[iDate];
@@ -134,31 +113,26 @@ function aniv_getCommemorativesForWindow_(startInclusive, endExclusive) {
   return out;
 }
 
-/** Lê a planilha inteira (cabeçalho + linhas). */
 function aniv_readSheet_(sheet) {
-  const values = sheet.getDataRange().getValues();
-  const headers = values[0].map(h => String(h || '').trim());
-  const rows = values.slice(1);
-  return { headers, rows };
+  const data = GEAPA_CORE.coreReadSheetData(sheet, {
+    headerRow: 1,
+    startRow: 2
+  });
+
+  return {
+    headers: data.headers,
+    rows: data.rows
+  };
 }
 
-/**
- * Procura um cabeçalho pelo nome, normalizando (minúsculo e sem acentos).
- * optional=true retorna -1 se não achar.
- */
 function aniv_findHeaderIndex_(headers, name, optional) {
   const target = aniv_normHeader_(name);
   for (let i = 0; i < headers.length; i++) {
     if (aniv_normHeader_(headers[i]) === target) return i;
   }
-  return -1;
+  return optional ? -1 : -1;
 }
 
-/** Normaliza cabeçalho (remove acentos) para comparação robusta. */
 function aniv_normHeader_(s) {
-  return String(s || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  return GEAPA_CORE.coreNormalizeHeader(s);
 }
