@@ -4,15 +4,20 @@
 
 function debugToday() {
   const runId = GEAPA_CORE.coreRunId();
-  const today = now_();
+  const today = aniv_now_();
   GEAPA_CORE.coreLogInfo(runId, 'debugToday', {
     now: String(today),
     tz: CFG.TZ,
-    mmdd: monthDayKey_(today),
-    fmt: formatDate_(today)
+    mmdd: aniv_monthDayKey_(today),
+    fmt: aniv_formatDate_(today)
   });
 }
 
 function pingEmail() {
-  MailApp.sendEmail(Session.getActiveUser().getEmail(), 'Ping GEAPA Aniversários', 'Ok.');
+  GEAPA_CORE.coreSendEmailText({
+    to: Session.getActiveUser().getEmail(),
+    subject: 'Ping GEAPA Aniversarios',
+    body: 'Ok.'
+  });
 }
+

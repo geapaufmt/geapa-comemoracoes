@@ -39,11 +39,6 @@ function aniv_installTriggers() {
     .atHour(7)
     .create();
 
-  ScriptApp.newTrigger('weeklyProfsBirthdayDigest')
-    .timeBased()
-    .onWeekDay(ScriptApp.WeekDay.MONDAY)
-    .atHour(7)
-    .create();
 
   Logger.log('Triggers de aniversários instalados com sucesso.');
 }

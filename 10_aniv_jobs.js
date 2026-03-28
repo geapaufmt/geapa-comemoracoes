@@ -53,11 +53,16 @@ function checkBirthdaysToday() {
       }
     });
 
-    // aviso diário para a comunicação
+    // aviso diário consolidado para a comunicação (membros + profs), apenas se houver aniversariantes
     try {
-      aniv_notifyCommunicationMembers_(rows, start, start, false);
+      const profRows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
+      if (rows.length || profRows.length) {
+        aniv_notifyCommunicationCombined_(rows, profRows, start, start, false);
+      } else {
+        GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: resumo diário não enviado (sem aniversariantes)', {});
+      }
     } catch (e) {
-      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário para comunicação (membros)', {
+      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário consolidado para comunicação', {
         err: String(e),
         stack: e && e.stack
       });
@@ -99,15 +104,9 @@ function checkProfsBirthdaysToday() {
       }
     });
 
-    // aviso diário para a comunicação
-    try {
-      aniv_notifyCommunicationProfs_(rows, start, start, false);
-    } catch (e) {
-      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário para comunicação (profs)', {
-        err: String(e),
-        stack: e && e.stack
-      });
-    }
+    GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: resumo diário consolidado é enviado por checkBirthdaysToday', {
+      count: rows.length
+    });
 
     GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: FIM OK', { count: rows.length });
   } finally {
@@ -138,11 +137,16 @@ function weeklyBirthdayDigest() {
     const start = today;
     const endExclusive = aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY + 1);
 
-    const rows = aniv_getMemberBirthdaysForWindow_(start, endExclusive);
+    const memberRows = aniv_getMemberBirthdaysForWindow_(start, endExclusive);
+    const profRows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
 
-    aniv_notifyCommunicationMembers_(rows, start, aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY), true);
+    aniv_notifyCommunicationCombined_(memberRows, profRows, start, aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY), true);
 
-    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: FIM OK', { count: rows.length });
+    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: FIM OK', {
+      memberCount: memberRows.length,
+      profCount: profRows.length,
+      totalCount: memberRows.length + profRows.length
+    });
   } finally {
     lock.releaseLock();
   }
@@ -150,33 +154,5 @@ function weeklyBirthdayDigest() {
 
 function weeklyProfsBirthdayDigest() {
   const runId = GEAPA_CORE.coreRunId();
-  GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: INÍCIO');
-
-  const today = aniv_startOfDay_(aniv_now_());
-
-  if (today.getDay() !== 1) {
-    GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: ignorado, hoje não é segunda-feira', {
-      today: aniv_formatDate_(today)
-    });
-    return;
-  }
-
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) {
-    GEAPA_CORE.coreLogWarn(runId, 'Lock não obtido — evitando execução concorrente.');
-    return;
-  }
-
-  try {
-    const start = today;
-    const endExclusive = aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY + 1);
-
-    const rows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
-
-    aniv_notifyCommunicationProfs_(rows, start, aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY), true);
-
-    GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: FIM OK', { count: rows.length });
-  } finally {
-    lock.releaseLock();
-  }
+  GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: ignorado, resumo semanal consolidado é enviado por weeklyBirthdayDigest', {});
 }
